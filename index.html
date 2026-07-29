@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#160808">
+  <link rel="icon" href="data:,">
+  <title>七宗罪倾向测试</title>
+  <style>
+    :root {
+      --ink: #160808;
+      --paper: #fff8e9;
+      --muted: #d9c5ad;
+      --wine: #7c1f2a;
+      --wine-deep: #421016;
+      --gold: #d7ad68;
+      --gold-soft: #f1d9a0;
+      --line: rgba(241, 217, 160, .25);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; color: var(--paper); background: var(--ink); font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+    button { font: inherit; }
+    .app { min-height: 100svh; isolation: isolate; overflow: hidden; position: relative; }
+    .app::before { content: ""; position: fixed; inset: 0; z-index: -2; background: #130707 url("seven-sins-hero-v1.png") center 43% / cover no-repeat; }
+    .app::after { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(15, 5, 6, .67); }
+    .gate { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(14, 4, 5, .82); }
+    .gate.is-hidden { display: none; }
+    .gate-panel { width: min(100%, 410px); padding: 34px 28px 28px; border: 1px solid var(--line); text-align: center; background: rgba(26, 8, 10, .9); box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+    .gate-mark { display: inline-grid; place-items: center; width: 48px; height: 48px; margin-bottom: 14px; border: 1px solid var(--gold); color: var(--gold-soft); font-family: Georgia, serif; font-size: 23px; }
+    .gate-panel h2 { margin: 0; color: var(--paper); font-family: Georgia, "Songti SC", serif; font-size: 32px; }
+    .gate-panel p { margin: 12px 0 22px; color: var(--muted); font-size: 14px; line-height: 1.75; }
+    .gate-input { width: 100%; height: 54px; padding: 0 15px; border: 1px solid var(--line); outline: 0; color: var(--paper); background: rgba(255,255,255,.06); font-size: 18px; letter-spacing: .18em; text-align: center; }
+    .gate-input:focus { border-color: var(--gold); }
+    .gate-button { width: 100%; min-height: 52px; margin-top: 12px; border: 0; color: #210b0d; background: var(--gold-soft); font-weight: 800; cursor: pointer; }
+    .gate-error { min-height: 20px; margin: 12px 0 0; color: #f5aa9d; font-size: 12px; }
+    .shell { width: min(100% - 32px, 720px); margin: 0 auto; padding: 22px 0 36px; }
+    .topbar { min-height: 46px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; letter-spacing: .08em; }
+    .brand { color: var(--gold-soft); font-weight: 700; letter-spacing: .14em; }
+    .view { display: none; min-height: calc(100svh - 104px); }
+    .view.active { display: flex; }
+    .home { align-items: center; justify-content: center; text-align: center; padding: 42px 0 56px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid var(--line); color: var(--gold-soft); font-size: 12px; letter-spacing: .14em; }
+    .eyebrow::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #c95858; box-shadow: 0 0 14px #c95858; }
+    h1 { margin: 20px 0 12px; color: var(--paper); font-family: Georgia, "Songti SC", serif; font-size: clamp(42px, 11vw, 68px); line-height: 1; font-weight: 700; letter-spacing: .04em; text-shadow: 0 6px 24px rgba(0,0,0,.45); }
+    .lead { max-width: 360px; margin: 0 auto; color: var(--muted); font-size: 15px; line-height: 1.8; }
+    .facts { display: flex; justify-content: center; gap: 0; margin: 30px 0; color: #f1dfbd; font-size: 13px; }
+    .facts span { padding: 0 14px; border-right: 1px solid var(--line); }
+    .facts span:last-child { border: 0; }
+    .primary, .choice, .outline { cursor: pointer; border: 0; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
+    .primary { width: min(100%, 320px); min-height: 56px; color: #210b0d; background: var(--gold-soft); font-weight: 800; letter-spacing: .06em; box-shadow: 0 10px 25px rgba(0,0,0,.28); }
+    .primary:hover { transform: translateY(-2px); background: #ffe7ac; }
+    .note { margin: 16px 0 0; color: rgba(255,248,233,.52); font-size: 12px; }
+    .question { flex-direction: column; justify-content: center; padding: 46px 0 28px; }
+    .progress-row { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 13px; }
+    .track { overflow: hidden; height: 4px; margin: 15px 0 34px; background: rgba(255,255,255,.12); }
+    .bar { width: 20%; height: 100%; background: var(--gold); transition: width .35s ease; }
+    .back { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; }
+    .prompt { margin: 0 0 24px; max-width: 620px; color: var(--paper); font-family: Georgia, "Songti SC", serif; font-size: clamp(28px, 7.4vw, 43px); line-height: 1.3; letter-spacing: .02em; }
+    .prompt small { display: block; margin-bottom: 13px; color: var(--gold-soft); font-family: "Microsoft YaHei", sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .12em; }
+    .choices { display: grid; gap: 11px; }
+    .choice { width: 100%; padding: 18px 18px; border: 1px solid rgba(241,217,160,.26); text-align: left; color: var(--paper); background: rgba(20,7,8,.57); line-height: 1.5; }
+    .choice:hover { transform: translateX(4px); border-color: var(--gold); background: rgba(91,24,33,.78); }
+    .choice b { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 12px; border: 1px solid rgba(241,217,160,.45); color: var(--gold-soft); font-size: 12px; font-weight: 600; vertical-align: middle; }
+    .hint { margin: 17px 0 0; color: rgba(255,248,233,.54); font-size: 12px; text-align: center; }
+    .result { flex-direction: column; gap: 18px; padding: 38px 0; }
+    .result-hero { padding: 26px; border: 1px solid var(--line); background: rgba(20,7,8,.76); box-shadow: 0 18px 45px rgba(0,0,0,.28); }
+    .result-label { color: var(--gold-soft); font-size: 12px; letter-spacing: .1em; }
+    .result-title { margin: 8px 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(44px, 12vw, 70px); line-height: 1; }
+    .result-subtitle { margin: 0; color: var(--gold-soft); font-size: 18px; font-weight: 700; }
+    .result-summary { margin: 18px 0 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .report-card { padding: 18px; border: 1px solid var(--line); background: rgba(20,7,8,.72); }
+    .report-card.wide { grid-column: 1 / -1; }
+    .card-kicker { color: var(--gold-soft); font-size: 11px; letter-spacing: .1em; }
+    .report-card h2 { margin: 8px 0; color: var(--paper); font-size: 18px; }
+    .report-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .rank-list { display: grid; gap: 11px; margin-top: 14px; }
+    .rank { display: grid; grid-template-columns: 26px 38px 1fr 30px; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .rank strong { color: var(--paper); font-size: 14px; }
+    .rank i { display: block; height: 5px; background: rgba(255,255,255,.13); overflow: hidden; }
+    .rank i::after { content: ""; display: block; height: 100%; width: var(--score); background: var(--gold); }
+    .rank em { color: var(--gold-soft); font-style: normal; text-align: right; }
+    .report-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+    .overview-item { padding: 13px 10px; border-left: 2px solid var(--gold); background: rgba(255,255,255,.035); }
+    .overview-item span { display: block; color: var(--muted); font-size: 11px; }
+    .overview-item strong { display: block; margin-top: 6px; color: var(--paper); font-size: 15px; }
+    .matrix { display: grid; margin-top: 14px; border-top: 1px solid var(--line); }
+    .matrix-row { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .matrix-row strong { color: var(--gold-soft); font-size: 13px; }
+    .matrix-row span { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .step-list { display: grid; gap: 11px; margin-top: 14px; }
+    .step { display: grid; grid-template-columns: 28px 1fr; gap: 11px; align-items: start; }
+    .step b { display: grid; place-items: center; width: 26px; height: 26px; color: #2c0e11; background: var(--gold-soft); font-size: 12px; }
+    .step strong { display: block; color: var(--paper); font-size: 14px; }
+    .step span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .result-actions .primary { width: 100%; }
+    .outline { min-height: 56px; color: var(--paper); border: 1px solid var(--line); background: rgba(20,7,8,.56); font-weight: 700; }
+    .outline:hover { border-color: var(--gold); }
+    .disclaimer { margin: 0; color: rgba(255,248,233,.48); font-size: 11px; line-height: 1.7; text-align: center; }
+    @media (max-width: 480px) { .shell { width: min(100% - 26px, 720px); } .topbar { font-size: 11px; } .report-grid { grid-template-columns: 1fr; } .report-card.wide { grid-column: auto; } .result-actions { grid-template-columns: 1fr; } .report-overview { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <section class="gate" id="accessGate" aria-label="测试解锁">
+    <div class="gate-panel">
+      <div class="gate-mark">VII</div>
+      <h2>输入解锁码</h2>
+      <p>请在购买后的自动发货内容中获取测试解锁码。</p>
+      <input class="gate-input" id="accessCode" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="输入解锁码" aria-label="解锁码">
+      <button class="gate-button" id="unlockButton">验证并进入测试</button>
+      <p class="gate-error" id="gateError" role="alert"></p>
+    </div>
+  </section>
+  <main class="app">
+    <div class="shell">
+      <header class="topbar"><span class="brand">SEVEN TENDENCIES</span><span id="topStatus">人格倾向体验</span></header>
+
+      <section class="view home active" id="homeView">
+        <div>
+          <span class="eyebrow">七维人格倾向</span>
+          <h1>七宗罪测试</h1>
+          <p class="lead">不是给你贴标签，而是看见你在不同情境里，最容易被哪一种欲望推着向前。</p>
+          <div class="facts"><span>28道情境题</span><span>约3分钟</span><span>专属倾向报告</span></div>
+          <button class="primary" id="startButton">开始完整测试</button>
+          <p class="note">28 道情境题，完成后生成你的七维倾向报告。</p>
+        </div>
+      </section>
+
+      <section class="view question" id="questionView" aria-live="polite">
+        <div class="progress-row"><button class="back" id="backButton">← 返回上一题</button><span id="progressText">01 / 28</span></div>
+        <div class="track"><div class="bar" id="progressBar"></div></div>
+        <h2 class="prompt" id="questionPrompt"></h2>
+        <div class="choices" id="choiceList"></div>
+        <p class="hint">选择后将自动进入下一题</p>
+      </section>
+
+      <section class="view result" id="resultView">
+        <article class="result-hero">
+          <div class="result-label">你的 28 题人格报告</div>
+          <div class="result-title" id="resultName">傲慢</div>
+          <p class="result-subtitle" id="resultSubtitle"></p>
+          <p class="result-summary" id="resultSummary"></p>
+        </article>
+        <div class="report-grid">
+          <article class="report-card"><div class="card-kicker">容易触发</div><h2 id="triggerTitle"></h2><p id="triggerText"></p></article>
+          <article class="report-card"><div class="card-kicker">自我提醒</div><h2 id="balanceTitle"></h2><p id="balanceText"></p></article>
+          <article class="report-card wide"><div class="card-kicker">行为模式</div><h2 id="patternTitle"></h2><p id="patternText"></p></article>
+          <article class="report-card"><div class="card-kicker">关系观察</div><h2 id="relationTitle"></h2><p id="relationText"></p></article>
+          <article class="report-card"><div class="card-kicker">下一步行动</div><h2 id="actionTitle"></h2><p id="actionText"></p></article>
+          <article class="report-card wide"><div class="card-kicker">七维倾向排行</div><div class="rank-list" id="rankList"></div></article>
+          <article class="report-card wide"><div class="card-kicker">报告总览</div><h2 id="overviewTitle"></h2><p id="overviewText"></p><div class="report-overview" id="overviewGrid"></div></article>
+          <article class="report-card wide"><div class="card-kicker">触发因素矩阵</div><h2>你容易被什么推向即时反应</h2><div class="matrix" id="triggerMatrix"></div></article>
+          <article class="report-card wide"><div class="card-kicker">优势资源</div><h2 id="strengthTitle"></h2><p id="strengthText"></p></article>
+          <article class="report-card wide"><div class="card-kicker">平衡行动建议</div><h2>把觉察变成一次具体选择</h2><div class="step-list" id="stepList"></div></article>
+        </div>
+        <div class="result-actions"><button class="primary" id="fullReportButton">复制报告链接</button><button class="outline" id="restartButton">重新体验</button></div>
+        <p class="disclaimer">本测试用于娱乐与自我观察，不构成心理诊断或专业建议。</p>
+      </section>
+    </div>
+  </main>
+  <script>
+    const ACCESS_CODE = '12312';
+    const gate = document.getElementById('accessGate');
+    const accessInput = document.getElementById('accessCode');
+    const gateError = document.getElementById('gateError');
+    function unlock() { gate.classList.add('is-hidden'); sessionStorage.setItem('seven-sins-access', 'granted'); }
+    function validateAccess() {
+      if (accessInput.value.trim() === ACCESS_CODE) { unlock(); return; }
+      gateError.textContent = '解锁码不正确，请核对自动发货内容。';
+      accessInput.select();
+    }
+    if (sessionStorage.getItem('seven-sins-access') === 'granted') unlock();
+    document.getElementById('unlockButton').addEventListener('click', validateAccess);
+    accessInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') validateAccess(); });
+    const dimensions = {
+      pride: { name: '傲慢', subtitle: '渴望被认可的掌控感', summary: '你对自己的标准很高，也希望付出被准确看见。当价值感被轻视时，你更容易先把姿态立住。', trigger: '功劳被忽略或能力被低估', balance: '先确认事实，再决定是否需要证明自己。', pattern: '你会用更高标准守住自己的位置。优势是自驱与判断力，风险是把每一次不同意见都理解成否定。', relation: '你欣赏有实力、讲分寸的人；真正信任后，也会用实际行动照顾对方。', action: '下一次想立刻证明自己时，先说出具体需求，再补充你的依据。' },
+      greed: { name: '贪婪', subtitle: '不愿轻易错过的积累欲', summary: '你对机会和资源保持敏锐。拥有更多会让你安心，但也可能让你很难真正停下来。', trigger: '稀缺机会、限时名额与比较压力', balance: '问自己：这件事是需要，还是不甘心错过？', pattern: '你习惯为未来预留余地，擅长捕捉机会。压力大时，选择越多反而越难感到满足。', relation: '你会用投入和安排表达在意，但需要留意别把安全感完全交给外部条件。', action: '给想要的事设一个上限：预算、时间或数量，选其中最重要的一项。' },
+      lust: { name: '色欲', subtitle: '强烈感受带来的靠近欲', summary: '你很容易被新鲜、魅力和情绪张力吸引。你并不冷漠，反而对连接的感受非常诚实。', trigger: '新鲜感、暧昧反馈与被需要的瞬间', balance: '把冲动延后十分钟，分清喜欢与空缺。', pattern: '你会先被感觉打动，再决定要不要靠近。优势是有热度与感染力，风险是把短暂心动误认成长期答案。', relation: '你重视回应、氛围和心照不宣，也需要明确边界来保护自己的投入。', action: '把“我现在很想要”写下来，十分钟后再判断它是否仍然重要。' },
+      envy: { name: '嫉妒', subtitle: '比较之下的自我审视', summary: '你很会观察别人的进度。比较会刺痛你，也会让你迅速发现自己真正想要靠近的方向。', trigger: '同龄人的进展、公开展示与评价', balance: '把羡慕写成一个可执行的小目标。', pattern: '你对差距非常敏感，能迅速捕捉他人的优势。关键在于把比较变成坐标，而不是自我否定。', relation: '你希望自己被公平对待，也很在意关系里的关注是否平衡。', action: '每次羡慕出现时，写下一项你愿意在七天内开始练习的能力。' },
+      gluttony: { name: '暴食', subtitle: '用充足感填满当下', summary: '你重视即时满足和感官体验。疲惫时，你更倾向先把自己安抚好，再面对那些尚未处理的事。', trigger: '压力后的空白、独处和即时奖励', balance: '先照顾身体，再选择真正能恢复你的方式。', pattern: '你知道怎样让当下舒服起来。它能帮你恢复，也可能在焦虑时变成无止境的填补。', relation: '你愿意分享快乐和照顾，亲近的人会感到你的热情与松弛。', action: '给自己准备两种奖励：一种即时满足，一种能让明天更轻松的恢复。' },
+      wrath: { name: '愤怒', subtitle: '边界被触碰后的反击力', summary: '你对不公平和越界很敏感。愤怒对你来说是一种保护，只是它有时会比你的真实需求先开口。', trigger: '被冒犯、被敷衍或规则失衡', balance: '先说需求，再表达立场，效果会更有力量。', pattern: '你对问题反应快，面对失衡敢于出声。真正的力量不只是反击，而是让边界被清楚地理解。', relation: '你不喜欢猜测和敷衍，信任建立在尊重与说到做到之上。', action: '情绪上来时先用一句“我需要的是……”替代第一句指责。' },
+      sloth: { name: '懒惰', subtitle: '在消耗之后的撤退欲', summary: '你并非没有目标，只是能量不足时会本能地把世界按下静音。休息对你很重要，但回避不能替代恢复。', trigger: '任务过载、选择太多与持续消耗', balance: '把下一步缩小到十分钟内能完成的动作。', pattern: '你会在压力过载时撤回能量。优势是知道何时停止，风险是让暂时的休息变成长期停滞。', relation: '你需要不催促、能让你自在的人；被逼得太紧时反而更难行动。', action: '只承诺十分钟：打开文件、列三件事，或完成最小的一步。' }
+    };
+    let questions = [
+      { context: '场景 01 · 被看见', text: '小组成果发布时，你完成的关键部分被轻描淡写地带过。你最接近的反应是？', answers: [
+        ['我会补充说明，让贡献被准确记录。', 'pride'], ['先不说，但心里会记得这次不公平。', 'wrath'], ['会反复想别人是不是比我更受认可。', 'envy'], ['算了，懒得解释，先把自己抽离出来。', 'sloth']
+      ]},
+      { context: '场景 02 · 机会窗口', text: '一个限量机会突然出现，但你并不确定它是否真的适合自己。你会？', answers: [
+        ['先拿下再说，错过比多一个选择更可惜。', 'greed'], ['看见朋友也想要，会更想确认自己能不能拿到。', 'envy'], ['立刻行动，享受那种被选中的刺激感。', 'lust'], ['先放着，等有精力时再决定。', 'sloth']
+      ]},
+      { context: '场景 03 · 情绪空档', text: '忙完一整天，回到家终于没有人打扰。你最想做的是？', answers: [
+        ['给自己安排喜欢的食物或连续看点东西。', 'gluttony'], ['找一个让我有感觉的人聊聊天。', 'lust'], ['什么都不做，只想把自己藏起来。', 'sloth'], ['整理明天的事，让一切重新可控。', 'pride']
+      ]},
+      { context: '场景 04 · 被越界', text: '有人在公开场合替你做了决定，没有提前问过你。你会？', answers: [
+        ['当场指出问题，不想让边界继续被试探。', 'wrath'], ['表面平静，但会想办法让对方知道我的能力。', 'pride'], ['看着别人得到话语权，心里会很不舒服。', 'envy'], ['不争了，只想赶紧结束这个场面。', 'sloth']
+      ]},
+      { context: '场景 05 · 想要更多', text: '你已经完成了一个不错的目标，却很难停下来享受。更像是因为？', answers: [
+        ['我总觉得还可以再拿到更多，才真正安心。', 'greed'], ['我希望自己的表现足够突出，不能被忽略。', 'pride'], ['我想马上找新的刺激，让感觉延续下去。', 'lust'], ['我只想用一点轻松的满足感抵消疲惫。', 'gluttony']
+      ]},
+      { context: '场景 06 · 意外称赞', text: '有人突然认真夸奖你，你更容易怎么回应？', answers: [
+        ['我会自然接住，因为这本来就是我应得的。', 'pride'], ['想知道对方是不是因此更在意我。', 'lust'], ['会想起另一个更被关注的人。', 'envy'], ['有点累，不太想继续展开这段对话。', 'sloth']
+      ]},
+      { context: '场景 07 · 消费决定', text: '你看中一件不急需但很喜欢的东西，最后下单通常是因为？', answers: [
+        ['怕以后买不到，先拥有才安心。', 'greed'], ['它能让我立刻感觉被好好对待。', 'gluttony'], ['它会让我在某个场合更有吸引力。', 'lust'], ['我不想在品味上落后于任何人。', 'pride']
+      ]},
+      { context: '场景 08 · 别人的高光', text: '朋友拿到一个很好的结果，大家都在祝贺他。你的第一反应更像是？', answers: [
+        ['真心祝福，但会立刻盘点自己的进度。', 'envy'], ['我也想尽快做出更亮眼的成绩。', 'pride'], ['为什么资源总是先流向他？', 'wrath'], ['看看就算了，不想给自己增加压力。', 'sloth']
+      ]},
+      { context: '场景 09 · 推进受阻', text: '一件事迟迟没人推进，最后所有人都在等。你会？', answers: [
+        ['直接把问题摊开，要求有人给答复。', 'wrath'], ['自己接手，至少标准不能被拉低。', 'pride'], ['先拖一拖，等更明确的信号出现。', 'sloth'], ['把能争取到的资源先握在自己手里。', 'greed']
+      ]},
+      { context: '场景 10 · 等待回复', text: '你在意的人很久没有回复消息。你最容易做的是？', answers: [
+        ['反复点开聊天框，想确认对方的态度。', 'lust'], ['觉得自己被怠慢了，情绪会明显上来。', 'wrath'], ['忍不住想：他是不是在和别人聊天。', 'envy'], ['干脆把手机放远，什么都不想处理。', 'sloth']
+      ]},
+      { context: '场景 11 · 收藏清单', text: '面对一张越攒越长的收藏清单，你更像哪一种？', answers: [
+        ['宁可多备一点，拥有会让我更踏实。', 'greed'], ['喜欢把感兴趣的都尝试一遍。', 'gluttony'], ['看到别人拥有会更想马上得到。', 'envy'], ['我更在意它是不是能体现我的选择。', 'pride']
+      ]},
+      { context: '场景 12 · 难得空闲', text: '终于拥有一个完全空白的下午，你最理想的安排是？', answers: [
+        ['找些好吃好看的内容，让自己彻底放松。', 'gluttony'], ['什么计划也不要，只想安静地躺一会儿。', 'sloth'], ['做点能让自己变得更好的事。', 'greed'], ['去感受新鲜的人和热闹的场景。', 'lust']
+      ]},
+      { context: '场景 13 · 捷径诱惑', text: '你发现一个能让结果更快到手的捷径，但规则没有说得很清楚。你会？', answers: [
+        ['先用起来，机会不会一直等人。', 'greed'], ['只要能做得更出色，我愿意研究透它。', 'pride'], ['不喜欢模糊规则，会直接质疑这种安排。', 'wrath'], ['太麻烦了，还是维持原样吧。', 'sloth']
+      ]},
+      { context: '场景 14 · 观点交锋', text: '讨论中有人明显误解了你的意思，还一直打断你。你会？', answers: [
+        ['当场打断回去，不能让他继续越界。', 'wrath'], ['重新讲一遍，让大家看清谁更有逻辑。', 'pride'], ['心里会比较谁得到的认同更多。', 'envy'], ['不想争了，退出这场讨论。', 'sloth']
+      ]},
+      { context: '场景 15 · 延迟任务', text: '一个重要任务已经拖了几天。真正让你迟迟没开始的，更多是？', answers: [
+        ['一想到复杂过程就先想逃开。', 'sloth'], ['我总想先找点轻松的事安慰自己。', 'gluttony'], ['担心做得不够好，宁愿再等等资源。', 'greed'], ['不想交出一个不够漂亮的结果。', 'pride']
+      ]},
+      { context: '场景 16 · 展示时刻', text: '你准备发一条精心挑选的动态，更看重的是？', answers: [
+        ['它能不能准确呈现我想被看到的样子。', 'pride'], ['别人会不会因此觉得我的生活很不错。', 'envy'], ['有没有人会因为这条内容更想靠近我。', 'lust'], ['发不发都行，最后常常懒得编辑。', 'sloth']
+      ]},
+      { context: '场景 17 · 新的邀约', text: '一个陌生但有潜力的邀约出现，你的判断标准更像是？', answers: [
+        ['它是否能带来更多机会和筹码。', 'greed'], ['它能否让我处在更值得被看见的位置。', 'pride'], ['我会被其中的人和未知感吸引。', 'lust'], ['未知太多，先不回应最省力。', 'sloth']
+      ]},
+      { context: '场景 18 · 服务失误', text: '你花时间准备的事情，因为别人的疏忽出了差错。你最接近？', answers: [
+        ['会明确表达不满，要求对方负责。', 'wrath'], ['我会自己修正，不想让成品显得差。', 'pride'], ['看见别人没受影响，会更觉得不平衡。', 'envy'], ['没力气追究，只想赶紧结束。', 'sloth']
+      ]},
+      { context: '场景 19 · 独处路线', text: '一个人出门时，你更容易被哪种安排吸引？', answers: [
+        ['慢慢吃、慢慢逛，把感官填满。', 'gluttony'], ['去一个有氛围、可能遇见有趣的地方。', 'lust'], ['找个安静角落，尽量不消耗自己。', 'sloth'], ['顺便把想买或想做的事一次办完。', 'greed']
+      ]},
+      { context: '场景 20 · 直接批评', text: '有人当面指出你的问题，而且语气并不温和。你会？', answers: [
+        ['先证明他并没有完全看懂我。', 'pride'], ['对这种语气很反感，想立刻回击。', 'wrath'], ['表面平静，心里却会和别人比较。', 'envy'], ['不想碰这件事，先把它搁置。', 'sloth']
+      ]},
+      { context: '场景 21 · 资源分配', text: '当你需要和别人共享有限资源时，你通常更在意？', answers: [
+        ['自己不能因为谦让而失去应得的部分。', 'greed'], ['分配是否体现了我的价值和位置。', 'pride'], ['有人占了便宜，我很难当作没看见。', 'wrath'], ['只要别让我做决定，怎么分都行。', 'sloth']
+      ]},
+      { context: '场景 22 · 被模仿', text: '你发现有人明显在模仿你的做法或表达。你会？', answers: [
+        ['觉得被冒犯，想让对方立刻停止。', 'wrath'], ['反而更想做得更有辨识度。', 'pride'], ['会担心他因此获得比我更多关注。', 'envy'], ['算了，没必要花精力在这上面。', 'sloth']
+      ]},
+      { context: '场景 23 · 深夜状态', text: '夜深了，你明知道该休息，却还不想结束这一天。你更可能？', answers: [
+        ['继续刷下去，明天的事明天再说。', 'sloth'], ['再吃点、看点，让自己舒服一点。', 'gluttony'], ['继续和某个人聊天，不想断开感觉。', 'lust'], ['研究明天能抓住的机会和安排。', 'greed']
+      ]},
+      { context: '场景 24 · 奖励自己', text: '完成一件辛苦的事后，你最偏好的奖励是？', answers: [
+        ['给自己一段彻底满足的吃喝或娱乐时间。', 'gluttony'], ['买下惦记很久的东西，感觉更有底气。', 'greed'], ['去感受一点浪漫、新鲜或暧昧。', 'lust'], ['做一件能让我更有成就感的事。', 'pride']
+      ]},
+      { context: '场景 25 · 模糊信号', text: '有人对你释放了暧昧但不明确的信号。你会？', answers: [
+        ['很想顺着感觉靠近，看看会发生什么。', 'lust'], ['先确认自己是不是那个被特别选择的人。', 'pride'], ['会在意他是否也对别人这样。', 'envy'], ['太复杂了，我更愿意先不回应。', 'sloth']
+      ]},
+      { context: '场景 26 · 方向摇摆', text: '面对一个未来方向，你迟迟无法决定，更大的顾虑是？', answers: [
+        ['怕选错后失去更多选择和资源。', 'greed'], ['不想走一条看起来不够出众的路。', 'pride'], ['没有足够动力把未知拆开处理。', 'sloth'], ['会忍不住拿自己的路径和别人对照。', 'envy']
+      ]},
+      { context: '场景 27 · 最后期限', text: '离最终期限只剩很短时间，你通常会进入哪种状态？', answers: [
+        ['越接近压力，越想把成果打磨到最好。', 'pride'], ['有人拖后腿时，我会变得很没耐心。', 'wrath'], ['先判断什么最值得投入，保住关键收益。', 'greed'], ['压力太大时反而会想彻底逃开。', 'sloth']
+      ]},
+      { context: '场景 28 · 不公平时刻', text: '当你确信自己遭遇了不公平的对待，你希望自己最先做到的是？', answers: [
+        ['把立场讲清楚，不让这件事被轻轻带过。', 'wrath'], ['让对方知道他低估了谁。', 'pride'], ['承认自己在意的，不只是这件事本身。', 'envy'], ['先安抚情绪，别让当下把自己耗空。', 'gluttony']
+      ]}
+    ];
+    questions = [
+      ['我希望自己的能力和付出能被准确看见。', 'pride'],
+      ['一件计划告一段落后，我会很快为自己安排更有挑战的下一步。', 'greed'],
+      ['新鲜感和强烈的吸引力，常常能迅速带动我的情绪。', 'lust'],
+      ['看到同龄人进展很快时，我会重新衡量自己的位置。', 'envy'],
+      ['压力累积时，我会想用吃喝、内容或购物把当下填满。', 'gluttony'],
+      ['遇到明显不公平的事，我很难假装它没有发生。', 'wrath'],
+      ['任务一旦复杂或压力太大，我会先把它放到一边。', 'sloth'],
+      ['面对有限机会时，我倾向先为自己多留一份选择。', 'greed'],
+      ['我不喜欢交出一个与自己标准不相符的成果。', 'pride'],
+      ['当有人让我心动时，我会很想尽快确认彼此的感觉。', 'lust'],
+      ['别人的认可和关注分配不均时，会让我感到不舒服。', 'envy'],
+      ['即使已经足够，我也容易再给自己一点即时奖励。', 'gluttony'],
+      ['被敷衍或被越界时，我会立刻想把话说清楚。', 'wrath'],
+      ['没有明确截止时间的事，我常常很难主动启动。', 'sloth'],
+      ['我会提前准备资源，以免真正需要时措手不及。', 'greed'],
+      ['我希望自己的选择、审美或判断有足够辨识度。', 'pride'],
+      ['我享受被人吸引，也享受自己能吸引他人的感觉。', 'lust'],
+      ['我会留意身边的人是否比我先获得想要的东西。', 'envy'],
+      ['疲惫时，我更愿意先让自己舒服，再处理麻烦。', 'gluttony'],
+      ['当别人替我做决定时，我会明显感到被冒犯。', 'wrath'],
+      ['面对太多选择时，我会因为不想消耗而暂停决定。', 'sloth'],
+      ['即使暂时用不上，我也会想抓住看起来有价值的机会。', 'greed'],
+      ['我会在意别人是否真正理解我的能力和价值。', 'pride'],
+      ['关系里的暧昧和情绪张力，会让我投入很多注意力。', 'lust'],
+      ['看到别人拥有我想要的生活时，我很难完全不比较。', 'envy'],
+      ['我会用感官上的满足来缓解低落或焦虑。', 'gluttony'],
+      ['当规则被破坏时，我会比大多数人更想追究到底。', 'wrath'],
+      ['当我连续消耗很久时，连小事也会让我想逃开。', 'sloth']
+    ].map(([text, dimension], index) => ({ context: '自评 ' + String(index + 1).padStart(2, '0'), text, dimension }));
+    const ratingLabels = ['几乎从不', '较少如此', '偶尔如此', '经常如此', '几乎总是'];
+    const state = { index: 0, picks: [] };
+    const $ = (id) => document.getElementById(id);
+    const views = { home: $('homeView'), question: $('questionView'), result: $('resultView') };
+    function show(name) { Object.values(views).forEach(v => v.classList.remove('active')); views[name].classList.add('active'); $('topStatus').textContent = name === 'question' ? '沉浸式情境作答' : name === 'result' ? '体验报告已生成' : '人格倾向体验'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function renderQuestion() {
+      const q = questions[state.index];
+      $('progressText').textContent = String(state.index + 1).padStart(2, '0') + ' / ' + String(questions.length).padStart(2, '0');
+      $('progressBar').style.width = ((state.index + 1) / questions.length * 100) + '%';
+      $('questionPrompt').innerHTML = '<small>' + q.context + '</small>' + q.text;
+      $('backButton').style.visibility = state.index ? 'visible' : 'hidden';
+      $('choiceList').innerHTML = '';
+      ratingLabels.forEach((label, i) => {
+        const button = document.createElement('button');
+        button.className = 'choice'; button.innerHTML = '<b>' + String.fromCharCode(65 + i) + '</b>' + label;
+        button.addEventListener('click', () => selectAnswer(q.dimension, i));
+        $('choiceList').appendChild(button);
+      });
+    }
+    function selectAnswer(dimension, value) { state.picks[state.index] = { dimension, value }; if (state.index < questions.length - 1) { state.index += 1; renderQuestion(); } else { renderResult(); } }
+    function scores() { const count = Object.fromEntries(Object.keys(dimensions).map(key => [key, 0])); state.picks.forEach(pick => count[pick.dimension] += pick.value); return count; }
+    function renderResult() {
+      const count = scores(); const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]); const [primary, primaryScore] = sorted[0]; const info = dimensions[primary];
+      $('resultName').textContent = info.name; $('resultSubtitle').textContent = info.subtitle; $('resultSummary').textContent = info.summary;
+      $('triggerTitle').textContent = info.trigger; $('triggerText').textContent = '当这个场景出现时，你更容易做出即时反应。它通常提醒着你真正重视的需求或边界。';
+      $('balanceTitle').textContent = info.balance; $('balanceText').textContent = '这不是缺点判定，而是一条让你更了解自己、重新拿回选择权的提示。';
+      $('patternTitle').textContent = '你的常见表现'; $('patternText').textContent = info.pattern;
+      $('relationTitle').textContent = '你更在意的连接方式'; $('relationText').textContent = info.relation;
+      $('actionTitle').textContent = '给自己的一个练习'; $('actionText').textContent = info.action;
+      $('rankList').innerHTML = sorted.map(([key, score], i) => { const percent = Math.round(score / 16 * 100); return '<div class="rank"><span>0' + (i + 1) + '</span><strong>' + dimensions[key].name + '</strong><i style="--score:' + Math.max(10, percent) + '%"></i><em>' + percent + '</em></div>'; }).join('');
+      const [secondary] = sorted[1]; const secondaryInfo = dimensions[secondary];
+      const leadPercent = Math.round(primaryScore / 16 * 100);
+      $('overviewTitle').textContent = info.name + '主导，' + secondaryInfo.name + '为次级倾向';
+      $('overviewText').textContent = '你的作答显示：你会优先用“' + info.name + '”的方式回应压力和选择，同时也会受到“' + secondaryInfo.name + '”的影响。两者叠加时，反应会更明显。';
+      $('overviewGrid').innerHTML = '<div class="overview-item"><span>主导维度</span><strong>' + info.name + ' ' + leadPercent + '%</strong></div><div class="overview-item"><span>次级维度</span><strong>' + secondaryInfo.name + '</strong></div><div class="overview-item"><span>当前模式</span><strong>觉察后可调整</strong></div>';
+      const matrix = [
+        ['外部评价', '能力、贡献或位置被忽略时，你会更容易启动“' + info.name + '”的保护反应。'],
+        ['机会资源', '面对稀缺、比较或不确定性时，“' + secondaryInfo.name + '”会影响你的取舍。'],
+        ['关系边界', '当回应不明确或边界被触碰时，先识别真实需求，比立刻反应更有帮助。']
+      ];
+      $('triggerMatrix').innerHTML = matrix.map(item => '<div class="matrix-row"><strong>' + item[0] + '</strong><span>' + item[1] + '</span></div>').join('');
+      $('strengthTitle').textContent = info.name + '带来的可用能力';
+      $('strengthText').textContent = '你的高分并不只是风险提示，也代表一项可被善用的能力：' + info.pattern.split('。')[0] + '。把它放在清晰目标与稳定边界里，会成为你的推进力。';
+      const steps = [
+        ['01', '先命名', '当情绪或冲动出现时，先说清楚：我现在在意的是认可、安全感、连接还是公平。'],
+        ['02', '再停顿', info.balance],
+        ['03', '做最小行动', info.action]
+      ];
+      $('stepList').innerHTML = steps.map(step => '<div class="step"><b>' + step[0] + '</b><div><strong>' + step[1] + '</strong><span>' + step[2] + '</span></div></div>').join('');
+      show('result');
+    }
+    $('startButton').addEventListener('click', () => { state.index = 0; state.picks = []; renderQuestion(); show('question'); });
+    $('backButton').addEventListener('click', () => { if (state.index) { state.index -= 1; renderQuestion(); } });
+    $('restartButton').addEventListener('click', () => show('home'));
+    $('fullReportButton').addEventListener('click', async () => {
+      const link = location.href.split('#')[0] + '#report';
+      try { await navigator.clipboard.writeText(link); alert('报告链接已复制，可以分享给好友。'); }
+      catch { window.prompt('复制这个报告链接：', link); }
+    });
+  </script>
+</body>
+</html>
