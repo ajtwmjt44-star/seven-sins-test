@@ -338,11 +338,20 @@
     }
     function selectAnswer(dimension, value) { state.picks[state.index] = { dimension, value }; if (state.index < questions.length - 1) { state.index += 1; renderQuestion(); } else { renderResult(); } }
     function scores() { const count = Object.fromEntries(Object.keys(dimensions).map(key => [key, 0])); state.picks.forEach(pick => count[pick.dimension] += pick.value); return count; }
+    function scoreCaps() {
+      const caps = Object.fromEntries(Object.keys(dimensions).map(key => [key, 0]));
+      questions.forEach(question => { caps[question.dimension] += 4; });
+      return caps;
+    }
+    function scorePercent(key, score, caps = scoreCaps()) {
+      return Math.round(score / Math.max(1, caps[key]) * 100);
+    }
     function renderRadar(count) {
       const order = ['pride', 'greed', 'lust', 'envy', 'wrath', 'gluttony', 'sloth'];
       const svg = $('radarChart');
       const ns = 'http://www.w3.org/2000/svg';
-      const cx = 310, cy = 258, radius = 162, labelRadius = 214, maxScore = 16;
+      const cx = 310, cy = 258, radius = 162, labelRadius = 214;
+      const caps = scoreCaps();
       const pointAt = (index, distance) => {
         const angle = -Math.PI / 2 + index * Math.PI * 2 / order.length;
         return [cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance];
@@ -363,7 +372,7 @@
         axis.setAttribute('class', 'radar-axis');
         svg.appendChild(axis);
       });
-      const dataPoints = order.map((key, index) => pointAt(index, radius * Math.max(0, Math.min(maxScore, count[key])) / maxScore));
+      const dataPoints = order.map((key, index) => pointAt(index, radius * Math.max(0, Math.min(100, scorePercent(key, count[key], caps))) / 100));
       const area = document.createElementNS(ns, 'polygon');
       area.setAttribute('points', dataPoints.map(point => point.map(value => value.toFixed(1)).join(',')).join(' '));
       area.setAttribute('class', 'radar-area');
@@ -385,13 +394,14 @@
         const score = document.createElementNS(ns, 'text');
         score.setAttribute('x', x); score.setAttribute('y', y + 24);
         score.setAttribute('text-anchor', anchor); score.setAttribute('dominant-baseline', 'middle');
-        score.setAttribute('class', 'radar-score'); score.textContent = Math.round(count[key] / maxScore * 100) + '%';
+        score.setAttribute('class', 'radar-score'); score.textContent = scorePercent(key, count[key], caps) + '%';
         svg.appendChild(score);
       });
-      svg.setAttribute('aria-label', order.map(key => dimensions[key].name + Math.round(count[key] / maxScore * 100) + '%').join('，'));
+      svg.setAttribute('aria-label', order.map(key => dimensions[key].name + scorePercent(key, count[key], caps) + '%').join(' / '));
     }
     function renderResult() {
-      const count = scores(); const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]); const [primary, primaryScore] = sorted[0]; const info = dimensions[primary];
+      const count = scores(); const caps = scoreCaps(); const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]); const [primary, primaryScore] = sorted[0]; const info = dimensions[primary];
+      const isTiedLead = sorted.length > 1 && primaryScore === sorted[1][1];
       renderRadar(count);
       $('resultName').textContent = info.name; $('resultSubtitle').textContent = info.subtitle; $('resultSummary').textContent = info.summary;
       $('triggerTitle').textContent = info.trigger; $('triggerText').textContent = '当这个场景出现时，你更容易做出即时反应。它通常提醒着你真正重视的需求或边界。';
@@ -399,12 +409,32 @@
       $('patternTitle').textContent = '你的常见表现'; $('patternText').textContent = info.pattern;
       $('relationTitle').textContent = '你更在意的连接方式'; $('relationText').textContent = info.relation;
       $('actionTitle').textContent = '给自己的一个练习'; $('actionText').textContent = info.action;
-      $('rankList').innerHTML = sorted.map(([key, score], i) => { const percent = Math.round(score / 16 * 100); return '<div class="rank"><span>0' + (i + 1) + '</span><strong>' + dimensions[key].name + '</strong><i style="--score:' + Math.max(10, percent) + '%"></i><em>' + percent + '</em></div>'; }).join('');
+      $('rankList').innerHTML = sorted.map(([key, score], i) => { const percent = scorePercent(key, score, caps); return '<div class="rank"><span>0' + (i + 1) + '</span><strong>' + dimensions[key].name + '</strong><i style="--score:' + percent + '%"></i><em>' + percent + '</em></div>'; }).join('');
       const [secondary] = sorted[1]; const secondaryInfo = dimensions[secondary];
-      const leadPercent = Math.round(primaryScore / 16 * 100);
+      const leadPercent = scorePercent(primary, primaryScore, caps);
+      if (isTiedLead) {
+        $('resultName').textContent = '七维接近';
+        $('resultSubtitle').textContent = '目前没有单一主导倾向';
+        $('resultSummary').textContent = '你的七个维度得分非常接近。当前结果不足以说明某一种倾向主导，更适合结合具体题目的高低分来观察。';
+        $('triggerTitle').textContent = '先区分每道题的真实程度';
+        $('triggerText').textContent = '连续选择同一档，会让七个维度得分相同。按每道题真实感受作答，才能得到清晰的主导倾向。';
+        $('balanceTitle').textContent = '不急着给自己贴标签';
+        $('balanceText').textContent = '当前报告反映的是分布接近，而不是某一种人格占主导。';
+        $('patternTitle').textContent = '你的当前作答模式';
+        $('patternText').textContent = '七维得分没有明显差距，建议重新按题目内容区分强弱后再查看报告。';
+        $('relationTitle').textContent = '报告解读提示';
+        $('relationText').textContent = '只有主导分数明显高于其他维度时，报告才会给出对应的关系与压力建议。';
+        $('actionTitle').textContent = '下一步建议';
+        $('actionText').textContent = '重新测试时，不要为了快速完成而连续选择同一档。';
+      }
       $('overviewTitle').textContent = info.name + '主导，' + secondaryInfo.name + '为次级倾向';
       $('overviewText').textContent = '你的作答显示：你会优先用“' + info.name + '”的方式回应压力和选择，同时也会受到“' + secondaryInfo.name + '”的影响。两者叠加时，反应会更明显。';
       $('overviewGrid').innerHTML = '<div class="overview-item"><span>主导维度</span><strong>' + info.name + ' ' + leadPercent + '%</strong></div><div class="overview-item"><span>次级维度</span><strong>' + secondaryInfo.name + '</strong></div><div class="overview-item"><span>当前模式</span><strong>觉察后可调整</strong></div>';
+      if (isTiedLead) {
+        $('overviewTitle').textContent = '七维分布接近，暂未形成单一主导';
+        $('overviewText').textContent = '你的作答在七个维度上的强度相近。重新按每道题的真实程度区分选择后，主导维度、雷达图和排行会同步更新。';
+        $('overviewGrid').innerHTML = '<div class="overview-item"><span>当前分布</span><strong>七维接近</strong></div><div class="overview-item"><span>最高强度</span><strong>' + leadPercent + '%</strong></div><div class="overview-item"><span>解读建议</span><strong>按真实程度作答</strong></div>';
+      }
       const matrix = [
         ['外部评价', '能力、贡献或位置被忽略时，你会更容易启动“' + info.name + '”的保护反应。'],
         ['机会资源', '面对稀缺、比较或不确定性时，“' + secondaryInfo.name + '”会影响你的取舍。'],
