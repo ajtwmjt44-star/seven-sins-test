@@ -74,6 +74,19 @@
     .card-kicker { color: var(--gold-soft); font-size: 11px; letter-spacing: .1em; }
     .report-card h2 { margin: 8px 0; color: var(--paper); font-size: 18px; }
     .report-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .radar-card { position: relative; overflow: hidden; padding: 20px 14px 12px; background: radial-gradient(circle at 50% 54%, rgba(104,45,24,.16), transparent 42%), rgba(14,8,7,.86); }
+    .radar-heading { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 2px 0 0; color: var(--paper); font-family: Georgia, "Songti SC", serif; font-size: 27px; letter-spacing: .08em; }
+    .radar-heading::before, .radar-heading::after { content: ""; width: 42px; height: 1px; background: linear-gradient(90deg, transparent, rgba(211,169,87,.72)); }
+    .radar-heading::after { transform: rotate(180deg); }
+    .radar-wrap { position: relative; width: min(100%, 620px); margin: 4px auto 0; }
+    .radar-wrap::before { content: ""; position: absolute; left: 50%; top: 50%; width: 54%; aspect-ratio: 1; transform: translate(-50%,-48%); border-radius: 50%; box-shadow: 0 0 28px rgba(211,169,87,.13), inset 0 0 22px rgba(211,169,87,.06); pointer-events: none; }
+    .radar-svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .radar-grid { fill: none; stroke: rgba(190,143,75,.30); stroke-width: 1.2; }
+    .radar-axis { stroke: rgba(190,143,75,.24); stroke-width: 1; }
+    .radar-area { fill: rgba(147,20,38,.62); stroke: #d4a45d; stroke-width: 3; stroke-linejoin: round; filter: drop-shadow(0 0 10px rgba(130,13,30,.32)); }
+    .radar-point { fill: #f5dfb9; stroke: #1b0d0b; stroke-width: 3; }
+    .radar-label { fill: #f4d9a5; font-family: "Microsoft YaHei", sans-serif; font-size: 24px; font-weight: 800; paint-order: stroke; stroke: rgba(18,9,8,.9); stroke-width: 5px; stroke-linejoin: round; }
+    .radar-score { fill: rgba(244,217,165,.76); font-family: "Microsoft YaHei", sans-serif; font-size: 15px; font-weight: 700; paint-order: stroke; stroke: rgba(18,9,8,.82); stroke-width: 3px; }
     .rank-list { display: grid; gap: 11px; margin-top: 14px; }
     .rank { display: grid; grid-template-columns: 26px 38px 1fr 30px; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
     .rank strong { color: var(--paper); font-size: 14px; }
@@ -98,7 +111,7 @@
     .outline { min-height: 56px; color: var(--paper); border: 1px solid var(--line); background: rgba(20,7,8,.56); font-weight: 700; }
     .outline:hover { border-color: var(--gold); }
     .disclaimer { margin: 0; color: rgba(255,248,233,.48); font-size: 11px; line-height: 1.7; text-align: center; }
-    @media (max-width: 480px) { .shell { width: min(100% - 26px, 720px); } .topbar { font-size: 11px; } .report-grid { grid-template-columns: 1fr; } .report-card.wide { grid-column: auto; } .result-actions { grid-template-columns: 1fr; } .report-overview { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .shell { width: min(100% - 26px, 720px); } .topbar { font-size: 11px; } .report-grid { grid-template-columns: 1fr; } .report-card.wide { grid-column: auto; } .result-actions { grid-template-columns: 1fr; } .report-overview { grid-template-columns: 1fr; } .radar-card { padding-inline: 4px; } .radar-heading { font-size: 25px; gap: 10px; } .radar-heading::before, .radar-heading::after { width: 30px; } .radar-label { font-size: 23px; } .radar-score { font-size: 15px; } }
   </style>
 </head>
 <body>
@@ -143,12 +156,18 @@
           <p class="result-summary" id="resultSummary"></p>
         </article>
         <div class="report-grid">
+          <article class="report-card wide radar-card">
+            <h2 class="radar-heading">七维倾向分布</h2>
+            <div class="radar-wrap">
+              <svg class="radar-svg" id="radarChart" viewBox="0 0 620 540" role="img" aria-label="七维倾向分布雷达图"></svg>
+            </div>
+          </article>
+          <article class="report-card wide"><div class="card-kicker">七维倾向排行</div><div class="rank-list" id="rankList"></div></article>
           <article class="report-card"><div class="card-kicker">容易触发</div><h2 id="triggerTitle"></h2><p id="triggerText"></p></article>
           <article class="report-card"><div class="card-kicker">自我提醒</div><h2 id="balanceTitle"></h2><p id="balanceText"></p></article>
           <article class="report-card wide"><div class="card-kicker">行为模式</div><h2 id="patternTitle"></h2><p id="patternText"></p></article>
           <article class="report-card"><div class="card-kicker">关系观察</div><h2 id="relationTitle"></h2><p id="relationText"></p></article>
           <article class="report-card"><div class="card-kicker">下一步行动</div><h2 id="actionTitle"></h2><p id="actionText"></p></article>
-          <article class="report-card wide"><div class="card-kicker">七维倾向排行</div><div class="rank-list" id="rankList"></div></article>
           <article class="report-card wide"><div class="card-kicker">报告总览</div><h2 id="overviewTitle"></h2><p id="overviewText"></p><div class="report-overview" id="overviewGrid"></div></article>
           <article class="report-card wide"><div class="card-kicker">触发因素矩阵</div><h2>你容易被什么推向即时反应</h2><div class="matrix" id="triggerMatrix"></div></article>
           <article class="report-card wide"><div class="card-kicker">优势资源</div><h2 id="strengthTitle"></h2><p id="strengthText"></p></article>
@@ -179,7 +198,7 @@
       lust: { name: '色欲', subtitle: '强烈感受带来的靠近欲', summary: '你很容易被新鲜、魅力和情绪张力吸引。你并不冷漠，反而对连接的感受非常诚实。', trigger: '新鲜感、暧昧反馈与被需要的瞬间', balance: '把冲动延后十分钟，分清喜欢与空缺。', pattern: '你会先被感觉打动，再决定要不要靠近。优势是有热度与感染力，风险是把短暂心动误认成长期答案。', relation: '你重视回应、氛围和心照不宣，也需要明确边界来保护自己的投入。', action: '把“我现在很想要”写下来，十分钟后再判断它是否仍然重要。' },
       envy: { name: '嫉妒', subtitle: '比较之下的自我审视', summary: '你很会观察别人的进度。比较会刺痛你，也会让你迅速发现自己真正想要靠近的方向。', trigger: '同龄人的进展、公开展示与评价', balance: '把羡慕写成一个可执行的小目标。', pattern: '你对差距非常敏感，能迅速捕捉他人的优势。关键在于把比较变成坐标，而不是自我否定。', relation: '你希望自己被公平对待，也很在意关系里的关注是否平衡。', action: '每次羡慕出现时，写下一项你愿意在七天内开始练习的能力。' },
       gluttony: { name: '暴食', subtitle: '用充足感填满当下', summary: '你重视即时满足和感官体验。疲惫时，你更倾向先把自己安抚好，再面对那些尚未处理的事。', trigger: '压力后的空白、独处和即时奖励', balance: '先照顾身体，再选择真正能恢复你的方式。', pattern: '你知道怎样让当下舒服起来。它能帮你恢复，也可能在焦虑时变成无止境的填补。', relation: '你愿意分享快乐和照顾，亲近的人会感到你的热情与松弛。', action: '给自己准备两种奖励：一种即时满足，一种能让明天更轻松的恢复。' },
-      wrath: { name: '愤怒', subtitle: '边界被触碰后的反击力', summary: '你对不公平和越界很敏感。愤怒对你来说是一种保护，只是它有时会比你的真实需求先开口。', trigger: '被冒犯、被敷衍或规则失衡', balance: '先说需求，再表达立场，效果会更有力量。', pattern: '你对问题反应快，面对失衡敢于出声。真正的力量不只是反击，而是让边界被清楚地理解。', relation: '你不喜欢猜测和敷衍，信任建立在尊重与说到做到之上。', action: '情绪上来时先用一句“我需要的是……”替代第一句指责。' },
+      wrath: { name: '暴怒', subtitle: '边界被触碰后的反击力', summary: '你对不公平和越界很敏感。愤怒对你来说是一种保护，只是它有时会比你的真实需求先开口。', trigger: '被冒犯、被敷衍或规则失衡', balance: '先说需求，再表达立场，效果会更有力量。', pattern: '你对问题反应快，面对失衡敢于出声。真正的力量不只是反击，而是让边界被清楚地理解。', relation: '你不喜欢猜测和敷衍，信任建立在尊重与说到做到之上。', action: '情绪上来时先用一句“我需要的是……”替代第一句指责。' },
       sloth: { name: '懒惰', subtitle: '在消耗之后的撤退欲', summary: '你并非没有目标，只是能量不足时会本能地把世界按下静音。休息对你很重要，但回避不能替代恢复。', trigger: '任务过载、选择太多与持续消耗', balance: '把下一步缩小到十分钟内能完成的动作。', pattern: '你会在压力过载时撤回能量。优势是知道何时停止，风险是让暂时的休息变成长期停滞。', relation: '你需要不催促、能让你自在的人；被逼得太紧时反而更难行动。', action: '只承诺十分钟：打开文件、列三件事，或完成最小的一步。' }
     };
     let questions = [
@@ -319,8 +338,61 @@
     }
     function selectAnswer(dimension, value) { state.picks[state.index] = { dimension, value }; if (state.index < questions.length - 1) { state.index += 1; renderQuestion(); } else { renderResult(); } }
     function scores() { const count = Object.fromEntries(Object.keys(dimensions).map(key => [key, 0])); state.picks.forEach(pick => count[pick.dimension] += pick.value); return count; }
+    function renderRadar(count) {
+      const order = ['pride', 'greed', 'lust', 'envy', 'wrath', 'gluttony', 'sloth'];
+      const svg = $('radarChart');
+      const ns = 'http://www.w3.org/2000/svg';
+      const cx = 310, cy = 258, radius = 162, labelRadius = 214, maxScore = 16;
+      const pointAt = (index, distance) => {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / order.length;
+        return [cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance];
+      };
+      const polygon = (distance) => order.map((_, index) => pointAt(index, distance).map(value => value.toFixed(1)).join(',')).join(' ');
+      svg.innerHTML = '';
+      [0.25, 0.5, 0.75, 1].forEach(level => {
+        const ring = document.createElementNS(ns, 'polygon');
+        ring.setAttribute('points', polygon(radius * level));
+        ring.setAttribute('class', 'radar-grid');
+        svg.appendChild(ring);
+      });
+      order.forEach((key, index) => {
+        const [x, y] = pointAt(index, radius);
+        const axis = document.createElementNS(ns, 'line');
+        axis.setAttribute('x1', cx); axis.setAttribute('y1', cy);
+        axis.setAttribute('x2', x); axis.setAttribute('y2', y);
+        axis.setAttribute('class', 'radar-axis');
+        svg.appendChild(axis);
+      });
+      const dataPoints = order.map((key, index) => pointAt(index, radius * Math.max(0, Math.min(maxScore, count[key])) / maxScore));
+      const area = document.createElementNS(ns, 'polygon');
+      area.setAttribute('points', dataPoints.map(point => point.map(value => value.toFixed(1)).join(',')).join(' '));
+      area.setAttribute('class', 'radar-area');
+      svg.appendChild(area);
+      dataPoints.forEach(([x, y]) => {
+        const point = document.createElementNS(ns, 'circle');
+        point.setAttribute('cx', x); point.setAttribute('cy', y); point.setAttribute('r', 6);
+        point.setAttribute('class', 'radar-point');
+        svg.appendChild(point);
+      });
+      order.forEach((key, index) => {
+        const [x, y] = pointAt(index, labelRadius);
+        const label = document.createElementNS(ns, 'text');
+        const anchor = x < cx - 24 ? 'end' : x > cx + 24 ? 'start' : 'middle';
+        label.setAttribute('x', x); label.setAttribute('y', y - 3);
+        label.setAttribute('text-anchor', anchor); label.setAttribute('dominant-baseline', 'middle');
+        label.setAttribute('class', 'radar-label'); label.textContent = dimensions[key].name;
+        svg.appendChild(label);
+        const score = document.createElementNS(ns, 'text');
+        score.setAttribute('x', x); score.setAttribute('y', y + 24);
+        score.setAttribute('text-anchor', anchor); score.setAttribute('dominant-baseline', 'middle');
+        score.setAttribute('class', 'radar-score'); score.textContent = Math.round(count[key] / maxScore * 100) + '%';
+        svg.appendChild(score);
+      });
+      svg.setAttribute('aria-label', order.map(key => dimensions[key].name + Math.round(count[key] / maxScore * 100) + '%').join('，'));
+    }
     function renderResult() {
       const count = scores(); const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]); const [primary, primaryScore] = sorted[0]; const info = dimensions[primary];
+      renderRadar(count);
       $('resultName').textContent = info.name; $('resultSubtitle').textContent = info.subtitle; $('resultSummary').textContent = info.summary;
       $('triggerTitle').textContent = info.trigger; $('triggerText').textContent = '当这个场景出现时，你更容易做出即时反应。它通常提醒着你真正重视的需求或边界。';
       $('balanceTitle').textContent = info.balance; $('balanceText').textContent = '这不是缺点判定，而是一条让你更了解自己、重新拿回选择权的提示。';
